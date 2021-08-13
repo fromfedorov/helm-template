@@ -1,0 +1,59 @@
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  YC_REGISTRY: cr.yandex/crp99as7aln8rp4ldpmi
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:19.03.12-dind
+  variables:
+    IMAGE_NAME: ${YC_REGISTRY}/myapp:${CI_COMMIT_SHORT_SHA}
+  before_script:
+    - cat "$YC_SA_KEY" | docker login -u json_key --password-stdin $YC_REGISTRY
+  script:
+    - docker build -t ${IMAGE_NAME} ./
+    - docker push ${IMAGE_NAME}
+
+.deploy_template:
+  stage: deploy
+  image: vozerov/helm-deployer:latest
+  script:
+    # Setup YCloud
+    - yc config profile create sa-profile
+    - yc config set service-account-key ${YC_SA_KEY}
+    - yc config set cloud-id ${YC_CLOUD_ID}
+    - yc config set folder-id ${YC_FOLDER_ID}
+    - yc managed-kubernetes cluster get-credentials ${KUBE_CLUSTER} --external
+    # Setup GPG for Helm secrets
+    - echo "$HELM_GPG_KEY" > .helm_secrets_gpg_key.key
+    - gpg --allow-secret-key-import --import .helm_secrets_gpg_key.key
+    # Deploy via Helm
+    - cd .infra/
+    - helm secrets upgrade --wait --install app --namespace ${KUBE_NAMESPACE} --values values.${BUILD_VARIANT}.yaml --set image.tag=${CI_COMMIT_SHORT_SHA} chart/
+
+#values.${BUILD_VARIANT}.yaml
+dev deploy:
+  extends: .deploy_template
+  variables:
+    KUBE_CLUSTER: "kub-test"
+    KUBE_NAMESPACE: "default"
+    BUILD_VARIANT: "test"
+  environment:
+    name: test
+  when: manual
+
+#prod deploy:
+#  extends: .deploy_template
+#  variables:
+#    KUBE_CLUSTER: "kuber-prod"
+#    KUBE_NAMESPACE: "prod"
+#    BUILD_VARIANT: "prod"
+#    PROJECT: "svc"
+#  environment:
+#    name: prod
+#  when: manual

@@ -1,0 +1,18 @@
+replicaCount: 1
+image:
+    repository: vozerov
+    image: converter-api
+    tag: latest
+    pullPolicy: IfNotPresent
+nameOverride: ""
+fullnameOverride: ""
+service:
+    type: ClusterIP
+    port: 80
+    appport: 8080
+ingress:
+    annotations: {}
+    fqdn: default.dev.kis.im
+resources: {}
+tolerations: []
+affinity: {}

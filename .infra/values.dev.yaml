@@ -1,0 +1,12 @@
+image:
+    repository: cr.yandex/crp99as7aln8rp4ldpmi
+    image: myapp
+    tag: latest
+    pullPolicy: IfNotPresent
+ingress:
+    annotations: {}
+    fqdn: fromfedorov-yc-app.devops.rebrain.srwx.net
+public_env_variables:
+  PGSQL_URI: "postgresql://postgres:secretpassword@pgsql-postgresql:5432/my-database?sslmode=disable"
+  RABBIT_URI: "amqp://user:password@rabbitmq:5672/"
+  LISTEN: "8080"

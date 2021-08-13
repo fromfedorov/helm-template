@@ -1,0 +1,4 @@
+public_env_variables:
+  LISTEN: ":8080"
+  API_KEY: "dgsCCz6Gmoio2ksibNHQmb4sUBo7LWZ2"
+  PGSQL_URI: "postgresql://user:oio2ksibNHQmb4@db-stage:6432/stage?sslmode=disable"
